@@ -9,9 +9,9 @@
             [status-im.ui.components.toolbar.view :as toolbar]
             [status-im.i18n :as i18n]
             [status-im.ui.screens.accounts.recover.styles :as styles]
-            [status-im.ui.screens.accounts.recover.db :as recover.db]
             [status-im.ui.screens.accounts.db :as db]
             [status-im.utils.config :as config]
+            [status-im.utils.ethereum.core :as ethereum]
             [status-im.react-native.js-dependencies :as js-dependencies]
             [cljs.spec.alpha :as spec]
             [status-im.ui.components.common.common :as components.common]))
@@ -47,8 +47,9 @@
 
 (defview recover []
   (letsubs [{:keys [passphrase password]} [:get :accounts/recover]]
-    (let [valid-form? (and
-                       (spec/valid? ::recover.db/passphrase passphrase)
+    (let [words       (ethereum/passphrase->words passphrase)
+          valid-form? (and
+                       (ethereum/valid-words? words)
                        (spec/valid? ::db/password password))]
       [react/keyboard-avoiding-view {:style styles/screen-container}
        [status-bar/status-bar]
@@ -65,4 +66,4 @@
          {:forward?  true
           :label     (i18n/label :t/sign-in)
           :disabled? (not valid-form?)
-          :on-press  #(re-frame/dispatch [:recover-account passphrase password])}]]])))
+          :on-press  #(re-frame/dispatch [:recover-account (ethereum/words->passphrase words) password])}]]])))
